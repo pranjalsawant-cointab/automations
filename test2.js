@@ -6,21 +6,22 @@ const app = express();
 app.use(express.json());
 
 // --------------------------------------------------
-// ❌ HIGH BUG: Null reference (app crash)
-let users = null;
+let users = []; // initialize to empty array
 
 app.get("/users", (req, res) => {
-  // TypeError: Cannot read property 'length' of null
-  res.send("Total users: " + users.length);
+  const total = Array.isArray(users) ? users.length : 0;
+  res.send("Total users: " + total);
 });
 
 // --------------------------------------------------
-// ❌ HIGH BUG: Unhandled async error (server crash)
-app.get("/read", (req, res) => {
-  fs.readFile("missing-file.txt", "utf8", (err, data) => {
-    if (err) throw err; // ❌ crashes server
+app.get("/read", async (req, res) => {
+  try {
+    const data = await fs.promises.readFile("missing-file.txt", "utf8");
     res.send(data);
-  });
+  } catch (err) {
+    console.error("read-file error:", err);
+    res.status(500).send("Failed to read file");
+  }
 });
 
 // --------------------------------------------------
